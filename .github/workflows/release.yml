@@ -20,7 +20,7 @@ jobs:
         id: read_version
         uses: ashley-taylor/read-json-property-action@v1.0
         with:
-          path: manifest.json
+          path: egi_zigbee/custom_components/egi_zigbee/manifest.json
           property: version
 
       - name: Get latest GitHub release
