@@ -1,0 +1,11 @@
+{
+    "domain": "egi_zigbee",
+    "name": "EGI Zigbee HVAC/VRF Adapter",
+    "version": "1.0.0",
+    "documentation": "https://egi.co.il",
+    "requirements": ["zigpy>=0.38.0"],
+    "dependencies": ["zha"],
+    "codeowners": ["@khaleddiab"],
+    "iot_class": "local_push"
+  }
+  
