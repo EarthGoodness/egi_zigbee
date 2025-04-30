@@ -1,5 +1,5 @@
 {
-  "domain": "egi",
+  "domain": "egi_zigbee",
   "name": "EGI Zigbee HVAC/VRF Adapter",
   "codeowners": ["@khaleddiab"],
   "dependencies": ["zha"],
