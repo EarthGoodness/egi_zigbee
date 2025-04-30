@@ -1,13 +1,10 @@
-"""Base adapter for parsing and building Tuya-style DP payloads."""
-
-# No DP constants needed here – this only parses/builds based on subclasses’ dp_map.
-
 """Base adapter for parsing & building Tuya-style DP payloads."""
+
 
 class BaseAdapter:
     """Base class to parse/build Tuya-style DP payloads."""
 
-    # Subclasses override this: {dp_id: attribute_name}
+    # Subclasses override this: mapping of dp_id to attribute name
     dp_map = {}
 
     @classmethod
@@ -34,4 +31,3 @@ class BaseAdapter:
         data = int(value).to_bytes(length, "big")
         datatype = 1 if length == 1 else 2
         return {"dp": dp, "datatype": datatype, "data": data}
-
