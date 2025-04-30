@@ -1,6 +1,6 @@
 """Base adapter for parsing and building Tuya-style DP payloads."""
 
-from ..const import DP_POWER, DP_TEMP_SET, DP_TEMP_CURRENT, DP_MODE, DP_FAN, DP_SLAVE_MODE
+# No DP constants needed here – this only parses/builds based on subclasses’ dp_map.
 
 
 class BaseAdapter:
@@ -13,14 +13,12 @@ class BaseAdapter:
     def parse(cls, dp_values):
         """Convert dpValues list into a dict of attributes."""
         result = {}
-
         for dp in dp_values:
             attr = cls.dp_map.get(dp.dp)
             if attr is None:
                 continue
             value = int.from_bytes(dp.data, "big")
             result[attr] = value
-
         return result
 
     @classmethod
