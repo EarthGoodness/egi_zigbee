@@ -1,86 +1,74 @@
-# EGI VRF & HVAC Integration for Home Assistant
+# EGI Zigbee HVAC/VRF Adapter
 
-![HACS badge](https://img.shields.io/badge/HACS-Default-orange.svg)
-![GitHub release](https://img.shields.io/github/v/release/EarthGoodness/egi)
-![GitHub stars](https://img.shields.io/github/stars/EarthGoodness/egi?style=social)
-[![Validate with HACS Action](https://github.com/EarthGoodness/egi/actions/workflows/validate.yml/badge.svg)](https://github.com/EarthGoodness/egi/actions/workflows/validate.yml)
-[![Validate with hassfest Action](https://github.com/EarthGoodness/egi/actions/workflows/hassfest.yml/badge.svg)](https://github.com/EarthGoodness/egi/actions/workflows/hassfest.yml)
+![HACS badge](https://img.shields.io/badge/HACS-Default-orange.svg)  
+![GitHub release](https://img.shields.io/github/v/release/EarthGoodness/egi_zigbee)  
+![GitHub stars](https://img.shields.io/github/stars/EarthGoodness/egi_zigbee?style=social)  
+[![CI status](https://github.com/EarthGoodness/egi_zigbee/actions/workflows/ci.yml/badge.svg)](https://github.com/EarthGoodness/egi_zigbee/actions/workflows/ci.yml)  
+[![Release status](https://github.com/EarthGoodness/egi_zigbee/actions/workflows/release.yml/badge.svg)](https://github.com/EarthGoodness/egi_zigbee/actions/workflows/release.yml)
 
-Seamless control of **EGI HVAC & VRF adapters** directly from Home Assistant.
+Seamless control of **EGI HVAC & VRF adapters** via Zigbee Home Automation (ZHA) in Home Assistant.
 
-| Adapter | Max IDUs | Protocols | Features |
-|---------|----------|-----------|----------|
-| **EGI VRF Adapter Light** | 32 | RS‑485 Modbus RTU | Power, mode, temp, fan, swing |
-| **EGI VRF Adapter Pro** | 64 | RTU / TCP | All Light features + brand selection, restart, time‑sync, locks, humidity |
-| **EGI HVAC Adapter Solo** | 1 | RS‑485 Modbus RTU | Single‑IDU control, restart, brand write |
+| Adapter                        | Protocol    | Features                                             |
+|--------------------------------|-------------|------------------------------------------------------|
+| **EGI HVAC Adapter Solo**      | Zigbee ZHA   | Power ON/OFF, target & current temperature, mode, fan speed, slave mode |
+| **EGI VRF Adapter Light**      | Zigbee ZHA   | Same as Solo (supports up to 32 IDUs via DP mapping) |
+| **EGI VRF Adapter Pro**        | Zigbee ZHA   | Same as Light (extendable for Pro‐only DPs such as brand, locks, time sync) |
 
 ---
 
 ## Features
 
-* **Climate entities** with full HVAC modes, target temperature, fan & swing
-* **Gateway sensor** exposing brand, supported modes/limits, special flags
-* **Select entity** to change adapter brand (Pro/Solo)
-* **Service calls**  
-  - `egi.set_brand_code`  
-  - `egi.set_system_time`  
-  - `egi.scan_idus`
-* **Buttons** for on‑demand rescan, restart, factory‑reset (where supported)
-* Supports both **serial (USB/RS‑485)** and **Modbus TCP**
+- **ClimateEntity** for power, HVAC modes (Cool, Heat, Dehumidify, Fan), target temperature  
+- **FanEntity** for on/off & fan speed (Low, Medium, High, Auto)  
+- **Set as Slave** mode toggle  
+- **Automatic discovery** of multiple adapters under ZHA  
+- **Modular adapter classes** to add support for future DP (data point) expansions  
 
 ---
 
 ## Installation (HACS)
 
-1. In Home Assistant go to **Settings → Add‑ons, Backups & Supervisor → Integrations → HACS**  
-2. **Custom Repositories → +** and enter  
-   `https://github.com/EarthGoodness/egi`  
-   Category = **Integration**
-3. Search for **“EGI”** and click **Install**
-4. Restart Home Assistant when prompted.
+1. In Home Assistant go to **Settings → Add-ons & Integrations → HACS → Integrations → ⋯**  
+2. Click **Custom repositories**, enter: https://github.com/EarthGoodness/egi_zigbee and select **Integration**.  
+3. Search for **“EGI Zigbee HVAC/VRF Adapter”** and click **Install**.  
+4. Restart Home Assistant when prompted.
 
 ---
 
+## Manual Installation
+
+1. Clone into your HA config’s `custom_components` folder:
+```bash
+cd /config/custom_components
+git clone https://github.com/EarthGoodness/egi_zigbee.git egi_zigbee
+```
+2. Restart Home Assistant.
+
+---
 ## Configuration
+1. Pair your adapter in ZHA (model TS0601, manufacturer _TZE200_rpk52nw5).
 
-1. **Settings → Devices & Services → + Add Integration → “EGI VRF Gateway”.**  
-2. Select **Adapter type** (`solo`, `light`, `pro`) and **connection type**:  
-   *Serial* → choose port, baud 9600 E 8 1 by default.  
-   *TCP* → host, port 502.
-3. Finish the wizard – indoor units are auto‑discovered and appear as **climate** devices.
-4. *(Pro/Solo)*  Use the **Brand Select** dropdown or call  
-   ```yaml
-   service: egi.set_brand_code
-   data:
-     entry_id: <config_entry_id>
-     brand_code: 6        # Gree
-   ```
+2. Home Assistant will auto-create:
 
----
+-  Climate entity: EGI <model>
 
-## Services
+-  Fan entity: EGI <model> Fan
 
-| Service | Description |
-|---------|-------------|
-| `egi.scan_idus` | Rescan gateway for newly‑added indoor units |
-| `egi.set_system_time` | Sync adapter RTC with HA time |
-| `egi.set_brand_code` | Write brand code and auto‑restart adapter |
+3. Control power, set temperature, change mode and fan speed.
 
----
+4. (Optional) Extend or contribute new DP mappings in the adapters/ folder.
 
-## Development & Contributing
 
-Pull requests are welcome!
+## Development & Contributing
+Pull requests and issues are very welcome!
 
-* Fork **[EarthGoodness/egi](https://github.com/EarthGoodness/egi)** and branch from **main**
-* Pre‑commit linting: **ruff**, **black**, **flake8**
-* Unit tests: **pytest**.
+- Fork EarthGoodness/egi_zigbee and branch off main
 
-For the official Home‑Assistant submission see the **`core/`** folder (separate Git repo).
+- Linting: flake8 / ruff / black
 
----
+- Tests: (add pytest mocks for zigpy)
+
+- CI: GitHub Actions runs hassfest, HACS validation, and flake8
 
 ## Changelog
-
-See the [release page](https://github.com/EarthGoodness/egi/releases).
-
+See the release page for details.
