@@ -1,6 +1,7 @@
 import asyncio
 import logging
 
+import homeassistant.helpers.config_validation as cv
 from homeassistant.core import HomeAssistant
 from homeassistant.config_entries import ConfigEntry
 
@@ -11,7 +12,11 @@ from .fan import async_setup_entry as setup_fan
 _LOGGER = logging.getLogger(__name__)
 PLATFORMS = ["climate", "fan"]
 
+# Integration does not support YAML configuration; only config entries
+CONFIG_SCHEMA = cv.config_entry_only_config_schema(DOMAIN)
+
 async def async_setup(hass: HomeAssistant, config: dict):
+    """Initialize integration (no YAML configuration)."""
     hass.data.setdefault(DOMAIN, {})
     return True
 
@@ -26,10 +31,11 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
     return True
 
 async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry):
-    unload_ok = await asyncio.gather(
+    """Unload a config entry."""
+    results = await asyncio.gather(
         *[
             hass.config_entries.async_forward_entry_unload(entry, plat)
             for plat in PLATFORMS
         ]
     )
-    return all(unload_ok)
+    return all(results)
