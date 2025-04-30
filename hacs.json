@@ -1,8 +1,7 @@
 {
   "name": "EGI Zigbee HVAC/VRF Adapter",
-  "description": "Home Assistant integration for EGI Zigbee-based HVAC & VRF adapters",
-  "url": "https://github.com/EarthGoodness/egi_zigbee",
-  "homeassistant": "2021.12.0",
-  "domains": ["integration"],
-  "content_in_root": false
+  "content_in_root": false,
+  "country": "ALL",
+  "homeassistant": "2025.0.0",
+  "render_readme": true
 }
