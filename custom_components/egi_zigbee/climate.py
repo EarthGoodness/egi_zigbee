@@ -2,36 +2,27 @@
 
 import logging
 
-from homeassistant.components.climate import ClimateEntity
-from homeassistant.components.climate.const import (
-    HVAC_MODE_OFF,
-    HVAC_MODE_COOL,
-    HVAC_MODE_HEAT,
-    HVAC_MODE_DRY,
-    HVAC_MODE_FAN_ONLY,
-)
+from homeassistant.components.climate import ClimateEntity, HVACMode
 from homeassistant.const import ATTR_TEMPERATURE
 
-from .const import DOMAIN, DP_POWER, DP_TEMP_SET, DP_MODE, MODE_MAP
+from .const import DOMAIN, DP_MODE, DP_POWER, DP_TEMP_SET, MODE_MAP
 
 _LOGGER = logging.getLogger(__name__)
 
 HVAC_MODE_LOOKUP = {
-    "off": HVAC_MODE_OFF,
-    "cool": HVAC_MODE_COOL,
-    "heat": HVAC_MODE_HEAT,
-    "dehumidify": HVAC_MODE_DRY,
-    "fan": HVAC_MODE_FAN_ONLY,
+    "off": HVACMode.OFF,
+    "cool": HVACMode.COOL,
+    "heat": HVACMode.HEAT,
+    "dehumidify": HVACMode.DRY,
+    "fan": HVACMode.FAN_ONLY,
 }
 
 
 async def async_setup_entry(hass, entry, async_add_entities):
     """Set up climate entities for EGI Zigbee devices."""
     entities = []
-
     for dev in hass.data[DOMAIN].get("devices", []):
         entities.append(EgiZigbeeClimate(dev))
-
     async_add_entities(entities, update_before_add=True)
 
 
@@ -53,7 +44,13 @@ class EgiZigbeeClimate(ClimateEntity):
     def hvac_mode(self):
         """Return current HVAC mode."""
         raw = self._device.cluster_data.get(DP_MODE)
-        return HVAC_MODE_LOOKUP.get(MODE_MAP.get(raw, "off"), HVAC_MODE_OFF)
+        mode_str = MODE_MAP.get(raw, "off")
+        return HVAC_MODE_LOOKUP.get(mode_str, HVACMode.OFF)
+
+    @property
+    def hvac_modes(self):
+        """List of available HVAC operation modes."""
+        return list(HVAC_MODE_LOOKUP.values())
 
     @property
     def target_temperature(self):
@@ -68,8 +65,7 @@ class EgiZigbeeClimate(ClimateEntity):
     async def async_set_hvac_mode(self, hvac_mode):
         """Set new HVAC mode."""
         inv = {v: k for k, v in HVAC_MODE_LOOKUP.items()}
-        mode_str = inv.get(hvac_mode, "off")
-        dp_value = next(k for k, v in MODE_MAP.items() if v == mode_str)
+        dp_value = inv.get(hvac_mode, 0)
         await self._device.write_dp(DP_MODE, dp_value)
 
     async def async_turn_on(self):

@@ -1,11 +1,12 @@
 """EGI Zigbee HVAC/VRF Adapter integration entrypoint."""
 
-import asyncio
 import logging
 
 from homeassistant.core import HomeAssistant
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.helpers import config_validation as cv
+from homeassistant.components.zha.helpers import SIGNAL_ADD_ENTITIES
+from homeassistant.helpers.dispatcher import async_dispatcher_connect
 
 from .const import DOMAIN
 from .climate import async_setup_entry as setup_climate  # noqa: F401
@@ -18,30 +19,44 @@ PLATFORMS = ["climate", "fan"]
 CONFIG_SCHEMA = cv.config_entry_only_config_schema(DOMAIN)
 
 
-async def async_setup(hass: HomeAssistant, config: dict):
+async def async_setup(hass: HomeAssistant, config: dict) -> bool:
     """Set up the integration (no YAML)."""
     hass.data.setdefault(DOMAIN, {})
     return True
 
 
-async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
+async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Set up a config entry for ZHA devices."""
-    hass.data[DOMAIN][entry.entry_id] = {"entry": entry}
+    hass.data[DOMAIN].setdefault(entry.entry_id, {"entry": entry, "unsub": []})
 
-    for platform in PLATFORMS:
-        hass.async_create_task(
-            hass.config_entries.async_forward_entry_setup(entry, platform)
-        )
+    # Forward setup to climate & fan platforms
+    await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
+
+    # Whenever ZHA finishes adding its own entities, reload our platforms
+    def _entities_added() -> None:
+        for platform in PLATFORMS:
+            hass.config_entries.async_forward_entry_reload(entry, platform)
+
+    unsub = async_dispatcher_connect(
+        hass,
+        SIGNAL_ADD_ENTITIES,
+        _entities_added,
+    )
+    hass.data[DOMAIN][entry.entry_id]["unsub"].append(unsub)
 
     return True
 
 
-async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry):
+async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Unload a config entry."""
-    unload_ok = await asyncio.gather(
-        *[
-            hass.config_entries.async_forward_entry_unload(entry, plat)
-            for plat in PLATFORMS
-        ]
+    data = hass.data[DOMAIN].pop(entry.entry_id)
+
+    # Unsubscribe our listener
+    for unsub in data["unsub"]:
+        unsub()
+
+    # Unload platforms
+    unload_ok = await hass.config_entries.async_unload_platforms(
+        entry, PLATFORMS
     )
-    return all(unload_ok)
+    return unload_ok
